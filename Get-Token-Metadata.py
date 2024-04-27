@@ -10,16 +10,20 @@ client = Client("http://api.mainnet-beta.solana.com")
 # Define the Metaplex Program Id
 METADATA_PROGRAM_ID = Pubkey.from_string('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s')
 # Define the mint address you want to retrieve metadata for.
-mintAddress = 'G6Hq9oVmugm6r3rYeigtujECmyWE2mk9rnh6TSZn8qRS'
+mintAddress = 'So11111111111111111111111111111111111111112'
 
 def get_atts(mint_id):
     # Retrieve the metadata from the Solana blockchain.
     data = get_metadata(client, mint_id)['data']
-    print(data)
     # Make an HTTP GET request to the URI specified in the metadata.
     # This URI usually points to a JSON file with more detailed information about the NFT.
-    res = requests.get(data['uri'])
-    return res.json()
+    if data['uri'] != '':
+        uri = data['uri']
+        print(uri)
+        response = requests.get(uri)
+        return response.json()
+    else:
+        return data
 
 # Main function to extract metadata.
 def get_metadata(client, mint_key):
@@ -48,12 +52,12 @@ def unpack_metadata_account(data):
     i += 32
     mint_account = base58.b58encode(bytes(struct.unpack('<' + "B"*32, data[i:i+32])))
     i += 32
-    # Extract the name of the NFT.
+    # Extract the name of the NFT/token.
     name_len = struct.unpack('<I', data[i:i+4])[0]
     i += 4
     name = struct.unpack('<' + "B"*name_len, data[i:i+name_len])
     i += name_len
-    # Extract the symbol of the NFT.
+    # Extract the symbol of the NFT/token.
     symbol_len = struct.unpack('<I', data[i:i+4])[0]
     i += 4 
     symbol = struct.unpack('<' + "B"*symbol_len, data[i:i+symbol_len])
