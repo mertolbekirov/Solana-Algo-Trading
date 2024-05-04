@@ -10,7 +10,7 @@ client = Client("http://api.mainnet-beta.solana.com")
 # Define the Metaplex Program Id
 METADATA_PROGRAM_ID = Pubkey.from_string('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s')
 # Define the mint address you want to retrieve metadata for.
-mintAddress = 'So11111111111111111111111111111111111111112'
+mintAddress = 'Ee8LeXBM2XqFKoGSeiMmuQPAZ51GN8otr2tVEp4FJjf5'
 
 def get_atts(mint_id):
     # Retrieve the metadata from the Solana blockchain.
@@ -110,4 +110,4 @@ def unpack_metadata_account(data):
     }
     return metadata
 
-print(get_atts(mintAddress))
+print(get_atts(mintAddress)['description'])

@@ -6,6 +6,7 @@ from solders.pubkey import Pubkey  # Pubkey for handling public keys within Sola
 from solders.signature import Signature  # Signature class to handle transaction signatures.
 import pandas as pd  # Pandas library for handling data in tabular form.
 from tabulate import tabulate  # Tabulate library to display tables in a readable format.
+from datetime import datetime, timezone
 
 # The wallet address of the Raydium DEX on Solana which is used to identify transactions related to it.
 wallet_address = "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
@@ -15,29 +16,33 @@ solana_client = Client("https://api.mainnet-beta.solana.com")  # Initializes a c
 def getTokens(str_signature):
     """
     This function extracts and prints information about new liquidity pools from transaction signatures.
-
-    Parameters:
-    str_signature (str): A string representing the transaction signature from which to extract token information.
+    Additionally, it fetches and displays the transaction creation time.
     """
     signature = Signature.from_string(str_signature)  # Converts the string signature to a Signature object.
-    # Retrieves the transaction details from the blockchain using the signature, requesting JSON parsed format.
     transaction = solana_client.get_transaction(signature, encoding="jsonParsed",
                                                 max_supported_transaction_version=0).value
-    # Extracts the list of instructions from the transaction; each instruction represents an operation in the transaction.
-    instruction_list = transaction.transaction.transaction.message.instructions
+    # Get the slot from the transaction to find the block time
+    slot = transaction.slot
+    block_time_response = solana_client.get_block_time(slot)  # Get the block time using the slot
 
+    # Check if the block time response has a valid value and use it
+    if block_time_response.value is not None:
+        readable_time = datetime.fromtimestamp(block_time_response.value, timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')  # Convert timestamp to readable format
+        print("Transaction Time:", readable_time)  # Print the transaction time
+    else:
+        print("Transaction Time: Block time not available")
+
+    instruction_list = transaction.transaction.transaction.message.instructions
     for instructions in instruction_list:
-        # Check if the instruction is from the Raydium DEX program.
         if instructions.program_id == Pubkey.from_string(wallet_address):
             print("============NEW POOL DETECTED====================")
-            Token0 = instructions.accounts[8]  # Extracts the first token account involved in the pool.
-            Token1 = instructions.accounts[9]  # Extracts the second token account involved in the pool.
-            # Creates a dictionary with token information to display.
+            Token0 = instructions.accounts[8]
+            Token1 = instructions.accounts[9]
             data = {'Token_Index': ['Token0', 'Token1'],
                     'Account Public Key': [Token0, Token1]}
-            df = pd.DataFrame(data)  # Converts the dictionary into a pandas DataFrame for better formatting.
-            table = tabulate(df, headers='keys', tablefmt='fancy_grid')  # Formats the DataFrame into a table using tabulate.
-            print(table)  # Prints the table.
+            df = pd.DataFrame(data)
+            table = tabulate(df, headers='keys', tablefmt='fancy_grid')
+            print(table)
 
 async def run():
     """
